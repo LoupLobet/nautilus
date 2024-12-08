@@ -6,7 +6,7 @@ YACC=yacc
 CFLAGS=-Wall -pedantic -std=c99
 LDFLAGS= 
 
-all: lang
+all: naut
 
 scanner.c: scanner.l
 	${LEX} $<
@@ -14,6 +14,6 @@ scanner.o: scanner.c
 	${CC} ${CFLAGS} -c $<
 main.o: main.c
 	${CC} ${CFLAGS} -c $<
-lang: main.o scanner.o
+naut: main.o scanner.o
 	${LD} $^ -o $@ ${LDFLAGS}
 
