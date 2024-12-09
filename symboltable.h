@@ -5,6 +5,12 @@
 #define FNV_PRIME 16777619          // 32-bit
 #define HASH_TABLE_SIZE 16
 
+#define KIND_FUNC 0
+#define KIND_VAR 1
+
+#define TYPE_INT 0
+#define TYPE_FLOAT 1
+
 // TODO: test everything
 
 typedef struct Symbol {
@@ -14,8 +20,19 @@ typedef struct Symbol {
 	struct Symbol *next;
 } Symbol;
 
+struct bucket {
+	Symbol *head;
+	Symbol *tail;
+};
+
+typedef struct {
+	struct bucket **buckets;
+	int nbucket;
+	int len;
+} HashTable;
+
 typedef struct ScopeTable {
-	Symbol **symbols; // symbol hash table
+	HashTable *symbols;
 
 	struct ScopeTable *parenttable; // parent scope table
 	struct ScopeTable *subtables; // sub tables linked list
@@ -31,11 +48,11 @@ typedef struct {
 
 unsigned int	 fnv1a(char *, long);
 void	 ScopeTable_delete(ScopeTable *);
+Symbol	*ScopeTable_getsymbol(ScopeTable *, char *);
 ScopeTable	*ScopeTable_insertsubtable(ScopeTable *, ScopeTable *);
 Symbol	*ScopeTable_insertsymbol(ScopeTable *, Symbol *);
 ScopeTable	*ScopeTable_new(void);
 Symbol	*Symbol_new(void);
-Symbol	*SymbolTable_getsymbol(ScopeTable *, char *);
 SymbolTable	*SymbolTable_new(void);
 
 

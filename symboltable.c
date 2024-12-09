@@ -22,10 +22,40 @@ void
 ScopeTable_delete(ScopeTable *t)
 {
 	ScopeTable *p;
+	int i;
+	Symbol *sym;
+	Symbol *tmp;
 
 	for (p = t->subtables; p != NULL; p = p->next)
 		ScopeTable_delete(p);
+	for (i = 0; i < t->symbols->nbucket; i++) {
+		// free all the buckets
+		if (t->symbols->buckets[i]->head != NULL) {
+			sym = t->symbols->buckets[i]->head;
+			while (sym != NULL) {
+				tmp = sym;
+				sym = sym->next;
+				free(tmp);
+			}
+		}
+	}
 	free(t);
+}
+
+Symbol *
+ScopeTable_getsymbol(ScopeTable *t, char *name)
+{
+	unsigned int hash;
+	Symbol *sym;
+
+	hash = fnv1a(name, strlen(name)) % t->symbols->nbucket;
+	for (sym = t->symbols->buckets[hash]->head; sym != NULL; sym = sym->next) {
+		if (!strcmp(sym->name, name))
+			return sym;
+	}
+	if (t->parenttable != NULL)
+		return ScopeTable_getsymbol(t->parenttable, name);
+	return NULL;
 }
 
 ScopeTable *
@@ -46,17 +76,22 @@ ScopeTable_insertsymbol(ScopeTable *t, Symbol *sym)
 	Symbol *p;
 
 	// symbols are stored in a hash table
-	hash = fnv1a(sym->name, strlen(sym->name)) % HASH_TABLE_SIZE;
-	if (t->symbols[hash] == NULL)
-		t->symbols[hash] = sym;
-	else {
-		for (p = t->symbols[hash]; p->next != NULL; p = p->next) {
-			// check for already existing symbol
+	hash = fnv1a(sym->name, strlen(sym->name)) % t->symbols->nbucket;
+	printf("hash: %d\n", hash);
+	printf("%p\n", t->symbols->buckets[hash]);
+	if (t->symbols->buckets[hash]->tail == NULL) {
+		t->symbols->buckets[hash]->head = sym;
+	} else {
+		puts("OK");
+		// check for already existing symbol
+		for (p = t->symbols->buckets[hash]->head; p->next != NULL; p = p->next) {
 			if (!strcmp(p->name, sym->name))
 				return NULL;
 		}
-		p->next = sym;
 	}
+	t->symbols->buckets[hash]->tail = sym;
+	t->symbols->len++;
+	sym->next = NULL;
 	return sym;
 }
 
@@ -64,17 +99,36 @@ ScopeTable *
 ScopeTable_new(void)
 {
 	ScopeTable *t;
+	int i;
 
 	if ((t = malloc(sizeof(ScopeTable))) == NULL)
 		return NULL;
-	if ((t->symbols = malloc(sizeof(Symbol *) * HASH_TABLE_SIZE)) == NULL) {
-		free(t);
-		return NULL;
-	}
 	t->subtables = NULL;
 	t->parenttable = NULL;
 	t->lastsubtable = NULL;
 	t->next = NULL;
+	// init symbol hash table
+	if ((t->symbols = malloc(sizeof(HashTable))) == NULL) {
+		free(t);
+		return NULL;
+	}
+	if ((t->symbols->buckets = malloc(sizeof(struct bucket *) * HASH_TABLE_SIZE)) == NULL) {
+		free(t->symbols);
+		free(t);
+		return NULL;
+	}
+	t->symbols->nbucket = HASH_TABLE_SIZE;
+	for (i = 0; i < t->symbols->nbucket; i++) {
+		if ((t->symbols->buckets[i] = malloc(sizeof(struct bucket))) == NULL) {
+			free(t->symbols->buckets);
+			free(t->symbols);
+			free(t);
+			return NULL;
+		}
+		t->symbols->buckets[i]->head = NULL;
+		t->symbols->buckets[i]->tail = NULL;
+	}
+	t->symbols->len = 0;
 	return t;
 }
 
@@ -87,22 +141,6 @@ Symbol_new(void)
 		return NULL;
 	sym->next = NULL;
 	return sym;
-}
-
-Symbol *
-ScopeTable_getsymbol(ScopeTable *t, char *name)
-{
-	unsigned int hash;
-	Symbol *sym;
-
-	hash = fnv1a(name, strlen(name)) % HASH_TABLE_SIZE;
-	for (sym = t->symbols[hash]; sym != NULL; sym = sym->next) {
-		if (!strcmp(sym->name, name))
-			return sym;
-	}
-	if (t->parenttable != NULL)
-		return ScopeTable_getsymbol(t->parenttable, name);
-	return NULL;
 }
 
 SymbolTable *
