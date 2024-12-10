@@ -11,49 +11,74 @@
 #define T_INT 0
 #define T_FLOAT 1
 
-typedef struct Symbol {
+
+typedef struct function Function;
+typedef struct variable Variable;
+typedef struct scope Scope;
+typedef struct scopeTree ScopeTree;
+typedef struct symbol Symbol;
+typedef struct symbolTable SymbolTable;
+typedef union aux Aux;
+
+union aux {
+	Function *func;
+	Variable *var;
+};
+
+struct function {
+	Scope *scope;
+};
+
+struct variable {
+};
+
+struct scope {
+	char *name;
+	SymbolTable *symbols; // hash table of symbols
+	Scope *parenttable; // parent scope table
+	Scope *subtables; // sub tables linked list
+	Scope *lastsubtable; // last sub tables in the linked list
+	Scope *next; // next ScopeTable at the same block level
+};
+
+struct scopeTree {
+	Scope *root;
+};
+
+struct symbol {
 	int kind;
 	int type;
 	char *name;
-	struct Symbol *next;
-} Symbol;
+	Aux *aux;
+	Symbol *next;
+};
+
+struct symbolTable {
+	struct bucket **buckets;
+	int nbucket;
+	int len;
+};
 
 struct bucket {
 	Symbol *head;
 	Symbol *tail;
 };
 
-typedef struct {
-	struct bucket **buckets;
-	int nbucket;
-	int len;
-} HashTable;
-
-typedef struct ScopeTable {
-	char *name;
-	HashTable *symbols;
-	struct ScopeTable *parenttable; // parent scope table
-	struct ScopeTable *subtables; // sub tables linked list
-	struct ScopeTable *lastsubtable; // last sub tables in the linked list
-	struct ScopeTable *next; // next ScopeTable at the same block level
-} ScopeTable;
-
-typedef struct {
-	ScopeTable *scopetables;
-} SymbolTable;
-
 
 unsigned int	 fnv1a(char *, long);
-void	 ScopeTable_delete(ScopeTable *);
-Symbol	*ScopeTable_getsymbol(ScopeTable *, char *);
-ScopeTable	*ScopeTable_insertsubtable(ScopeTable *, ScopeTable *);
-Symbol	*ScopeTable_insertsymbol(ScopeTable *, Symbol *);
-ScopeTable	*ScopeTable_new(char *);
+void	 Scope_delete(Scope *); // TODO:
+Symbol	*Scope_getsymbol(Scope *, char *); // TODO: (to check)
+Scope	*Scope_insertsubtable(Scope *, Scope *); // TODO: (to check)
+Symbol	*Scope_insertsymbol(Scope *, Symbol *); // TODO: (to check)
+Scope	*Scope_new(char *); // TODO:
+Symbol	*Scope_newfunc(Scope *, Symbol *);
+Symbol	*Scope_newvar(Scope *, Symbol *);
+ScopeTree	*ScopeTree_new(Scope *);
 Symbol	*Symbol_new(void);
-SymbolTable	*SymbolTable_new(char *);
+
 
 #ifndef RELEASE
-void	 ScopeTable_print(ScopeTable *);
+void	 Scope_print(Scope *);
 #endif
 
 

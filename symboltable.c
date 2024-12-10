@@ -19,116 +19,170 @@ fnv1a(char *s, long n)
 }
 
 void
-ScopeTable_delete(ScopeTable *t)
+Scope_delete(Scope *scope)
 {
-	ScopeTable *p;
+	Scope *p;
+	Scope *tdel;
 	int i;
 	Symbol *sym;
-	Symbol *tmp;
+	Symbol *symdel;
 
-	for (p = t->subtables; p != NULL; p = p->next)
-		ScopeTable_delete(p);
-	for (i = 0; i < t->symbols->nbucket; i++) {
-		// free all the buckets
-		if (t->symbols->buckets[i]->head != NULL) {
-			sym = t->symbols->buckets[i]->head;
+	for (p = scope->subtables; p != NULL; p = p->next)
+		Scope_delete(p);
+	// free all the buckets
+	for (i = 0; i < scope->symbols->nbucket; i++) {
+		if (scope->symbols->buckets[i]->head != NULL) {
+			sym = scope->symbols->buckets[i]->head;
 			while (sym != NULL) {
-				tmp = sym;
+				symdel = sym;
 				sym = sym->next;
-				free(tmp);
+				free(symdel);
 			}
 		}
 	}
-	free(t);
+	free(scope->symbols->buckets);
+	free(scope->symbols);
+	// loop throught parent table sub tables to delete t
+	if (scope->parenttable != NULL) {
+		if (scope->parenttable->subtables == scope) { // t is the only sub table
+			tdel = scope;
+			scope->parenttable->subtables = scope->next;
+			free(tdel);
+		} else {
+			for (p = scope->parenttable->subtables; p->next != NULL; p = p->next) {
+				if (p->next == scope) {
+					tdel = p->next;
+					p->next = p->next->next;
+					free(tdel);
+				}
+			}
+		}
+	} else
+		free(scope);
 }
 
 Symbol *
-ScopeTable_getsymbol(ScopeTable *t, char *name)
+Scope_getsymbol(Scope *scope, char *name)
 {
 	unsigned int hash;
 	Symbol *sym;
 
-	hash = fnv1a(name, strlen(name)) % t->symbols->nbucket;
-	for (sym = t->symbols->buckets[hash]->head; sym != NULL; sym = sym->next) {
+	hash = fnv1a(name, strlen(name)) % scope->symbols->nbucket;
+	for (sym = scope->symbols->buckets[hash]->head; sym != NULL; sym = sym->next) {
 		if (!strcmp(sym->name, name))
 			return sym;
 	}
-	if (t->parenttable != NULL)
-		return ScopeTable_getsymbol(t->parenttable, name);
+	if (scope->parenttable != NULL)
+		return Scope_getsymbol(scope->parenttable, name);
 	return NULL;
 }
 
-ScopeTable *
-ScopeTable_insertsubtable(ScopeTable *t, ScopeTable *sub)
+Scope *
+Scope_insertsubtable(Scope *scope, Scope *sub)
 {
-	if (t->subtables == NULL)
-		t->subtables = sub;
+	if (scope->subtables == NULL)
+		scope->subtables = sub;
 	else 
-		t->lastsubtable->next = sub;
-	t->lastsubtable = sub;
-	sub->parenttable = t;
+		scope->lastsubtable->next = sub;
+	scope->lastsubtable = sub;
+	sub->parenttable = scope;
 	return sub;
 }
 
 Symbol *
-ScopeTable_insertsymbol(ScopeTable *t, Symbol *sym)
+Scope_insertsymbol(Scope *scope, Symbol *sym)
 {
 	unsigned int hash;
 	Symbol *p;
 
 	// symbols are stored in a hash table
-	hash = fnv1a(sym->name, strlen(sym->name)) % t->symbols->nbucket;
-	if (t->symbols->buckets[hash]->tail == NULL) {
-		t->symbols->buckets[hash]->head = sym;
+	hash = fnv1a(sym->name, strlen(sym->name)) % scope->symbols->nbucket;
+	if (scope->symbols->buckets[hash]->head == NULL) {
+		scope->symbols->buckets[hash]->head = sym;
 	} else {
 		// check for already existing symbol
-		for (p = t->symbols->buckets[hash]->head; p->next != NULL; p = p->next) {
-			if (!strcmp(p->name, sym->name))
+		for (p = scope->symbols->buckets[hash]->head; p != NULL; p = p->next) {
+			if (!strcmp(p->name, sym->name)) {
 				return NULL;
+			}
 		}
+		scope->symbols->buckets[hash]->tail->next = sym;
 	}
-	t->symbols->buckets[hash]->tail = sym;
-	t->symbols->len++;
-	sym->next = NULL;
+	scope->symbols->buckets[hash]->tail = sym;
+	scope->symbols->buckets[hash]->tail = NULL;
+	scope->symbols->len++;
 	return sym;
 }
 
-ScopeTable *
-ScopeTable_new(char *name)
+Scope *
+Scope_new(char *name)
 {
-	ScopeTable *t;
+	Scope *scope;
 	int i;
 
-	if ((t = malloc(sizeof(ScopeTable))) == NULL)
+	if ((scope = malloc(sizeof(Scope))) == NULL)
 		return NULL;
-	t->subtables = NULL;
-	t->parenttable = NULL;
-	t->lastsubtable = NULL;
-	t->next = NULL;
-	t->name = name;
+	scope->subtables = NULL;
+	scope->parenttable = NULL;
+	scope->lastsubtable = NULL;
+	scope->next = NULL;
+	scope->name = name;
 	// init symbol hash table
-	if ((t->symbols = malloc(sizeof(HashTable))) == NULL) {
-		free(t);
+	if ((scope->symbols = malloc(sizeof(HashTable))) == NULL) {
+		free(scope);
 		return NULL;
 	}
-	if ((t->symbols->buckets = malloc(sizeof(struct bucket *) * HASH_TABLE_SIZE)) == NULL) {
-		free(t->symbols);
-		free(t);
+	if ((scope->symbols->buckets = malloc(sizeof(struct bucket *) * HASH_TABLE_SIZE)) == NULL) {
+		free(scope->symbols);
+		free(scope);
 		return NULL;
 	}
-	t->symbols->nbucket = HASH_TABLE_SIZE;
-	for (i = 0; i < t->symbols->nbucket; i++) {
-		if ((t->symbols->buckets[i] = malloc(sizeof(struct bucket))) == NULL) {
-			free(t->symbols->buckets);
-			free(t->symbols);
-			free(t);
+	scope->symbols->nbucket = HASH_TABLE_SIZE;
+	for (i = 0; i < scope->symbols->nbucket; i++) {
+		if ((scope->symbols->buckets[i] = malloc(sizeof(struct bucket))) == NULL) {
+			free(scope->symbols->buckets);
+			free(scope->symbols);
+			free(scope);
 			return NULL;
 		}
-		t->symbols->buckets[i]->head = NULL;
-		t->symbols->buckets[i]->tail = NULL;
+		scope->symbols->buckets[i]->head = NULL;
+		scope->symbols->buckets[i]->tail = NULL;
 	}
-	t->symbols->len = 0;
-	return t;
+	scope->symbols->len = 0;
+	return scope;
+}
+
+Symbol *
+Scope_newfunc(Scope *scope, Symbol *func)
+{
+	if (Scope_insertsymbol(scope, func) == NULL)
+		return NULL;
+	if ((func->aux->func->scope = Scope_new(func->name)) == NULL)
+		return NULL;
+	if (Scope_insertsubtable(scope, func->aux->func->scope) == NULL) {
+		free(func);
+		return NULL;
+	}
+	return func;
+}
+
+Symbol *
+Scope_newvar(Scope *scope, Symbol *symvar)
+{
+	if (Scope_insertsymbol(scope, symvar) == NULL)
+		return NULL;
+	return symvar;
+}
+
+ScopeTree *
+ScopeTree_new(Scope *scope)
+{
+	ScopeTree *st;
+
+	if ((st = malloc(sizeof(SymbolTable))) == NULL)
+		return NULL;
+	st->root = scope;
+	return st;
 }
 
 Symbol *
@@ -139,39 +193,31 @@ Symbol_new(void)
 	if ((sym = malloc(sizeof(Symbol))) == NULL)
 		return NULL;
 	sym->next = NULL;
+	if ((sym->aux = malloc(sizeof(Aux))) == NULL) {
+		free(sym);
+		return NULL;
+	}
 	return sym;
 }
 
-SymbolTable *
-SymbolTable_new(char *name)
-{
-	SymbolTable *st;
 
-	if ((st = malloc(sizeof(SymbolTable))) == NULL)
-		return NULL;
-	if ((st->scopetables = ScopeTable_new(name)) == NULL) {
-		free(st);
-		return NULL;
-	}
-	return st;
-}
 
 #ifndef RELEASE
 
 void
-ScopeTable_print(ScopeTable *t)
+Scope_print(Scope *scope)
 {
 	int i;
 	int nosym;
 	Symbol *sym;
-	ScopeTable *subtable;
+	Scope *subtable;
 
 	printf("\n--------------------------\n");
-	printf("NAME: %s\n", t->name);
+	printf("NAME: %s\n", scope->name);
 	printf("SYMBOLS:\n");
 	nosym = 1;
-	for (i = 0; i < t->symbols->nbucket; i++) {
-		for (sym = t->symbols->buckets[i]->head; sym != NULL; sym = sym->next) {
+	for (i = 0; i < scope->symbols->nbucket; i++) {
+		for (sym = scope->symbols->buckets[i]->head; sym != NULL; sym = sym->next) {
 			printf("-> %s\t%d\t%d\n", sym->name, sym->kind, sym->type);
 			nosym = 0;
 		}
@@ -179,9 +225,9 @@ ScopeTable_print(ScopeTable *t)
 	if (nosym)
 		printf("-> NULL\n");
 	printf("SUBSCOPES(depth 1):\n");
-	if (t->subtables == NULL)
+	if (scope->subtables == NULL)
 		printf("-> NULL\n");
-	for (subtable = t->subtables; subtable != NULL; subtable = subtable->next) {
+	for (subtable = scope->subtables; subtable != NULL; subtable = subtable->next) {
 		printf("-> %s\n", subtable->name);
 	}
 	printf("--------------------------\n");

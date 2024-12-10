@@ -29,8 +29,8 @@ main(int argc, char *argv[])
     }
     */
     SymbolTable *st;
-    ScopeTable *tglobal, *tmain, *ttest;
-    Symbol *main, *a, *b, *c;
+    Scope *tglobal, *tmain, *ttest;
+    Symbol *main, *a, *b, *c, *a2;
     Symbol *sym;
     
 
@@ -39,7 +39,7 @@ main(int argc, char *argv[])
 	exit(1);
     }
 
-    tglobal = st->scopetables;
+    tglobal = st->root;
     if ((main = Symbol_new()) == NULL) {
 	perror("Symbol_new");
 	exit(1);
@@ -47,26 +47,25 @@ main(int argc, char *argv[])
     main->name = "main";
     main->kind = K_FUNC;
     main->type = T_INT;
-    ScopeTable_insertsymbol(tglobal, main);
+    Scope_insertsymbol(tglobal, main);
 
     // insert sub scopetables 
-    if ((tmain = ScopeTable_new("main")) == NULL) {
+    if ((tmain = Scope_new("main")) == NULL) {
 	perror("ScopeTable_new");
 	exit(1);
     }
-    if (ScopeTable_insertsubtable(tglobal, tmain) == NULL) {
+    if (Scope_insertsubtable(tglobal, tmain) == NULL) {
 	perror("ScopeTable_new");
 	exit(1);
     }
-    if ((ttest = ScopeTable_new("test")) == NULL) {
+    if ((ttest = Scope_new("test")) == NULL) {
 	perror("ScopeTable_new");
 	exit(1);
     }
-    if (ScopeTable_insertsubtable(tglobal, ttest) == NULL) {
+    if (Scope_insertsubtable(tglobal, ttest) == NULL) {
 	perror("ScopeTable_new");
 	exit(1);
     }
-    
 
     if ((a = Symbol_new()) == NULL) {
 	perror("Symbol_new");
@@ -75,7 +74,18 @@ main(int argc, char *argv[])
     a->name = "a";
     a->kind = K_VAR;
     a->type = T_INT;
-    ScopeTable_insertsymbol(tmain, a);
+    Scope_insertsymbol(tmain, a);
+
+    if ((a2 = Symbol_new()) == NULL) {
+	perror("Symbol_new");
+	exit(1);
+    }
+    a2->name = "a";
+    a2->kind = K_VAR;
+    a2->type = T_INT;
+    if (Scope_insertsymbol(ttest, a2) == NULL) {
+	perror("SymbolTable_insertsymbol");
+    }
 
     if ((b = Symbol_new()) == NULL) {
 	perror("Symbol_new");
@@ -84,7 +94,7 @@ main(int argc, char *argv[])
     b->name = "b";
     b->kind = K_VAR;
     b->type = T_INT;
-    ScopeTable_insertsymbol(tmain, b);
+    Scope_insertsymbol(tmain, b);
 
     if ((c = Symbol_new()) == NULL) {
 	perror("Symbol_new");
@@ -93,16 +103,24 @@ main(int argc, char *argv[])
     c->name = "c";
     c->kind = K_VAR;
     c->type = T_INT;
-    ScopeTable_insertsymbol(tmain, c);
+    Scope_insertsymbol(tmain, c);
 
-    if ((sym = ScopeTable_getsymbol(tmain, "a")) == NULL) {
+    if ((sym = Scope_getsymbol(tmain, "a")) == NULL) {
 	perror("ScopeTable_getsymbol");
 	exit(1);
     }
 
-    ScopeTable_print(tglobal);
-    ScopeTable_print(tmain);
-    ScopeTable_print(ttest);
-    // TODO: need to check inserting already existing symbol returns and error
+    Scope_print(tglobal);
+    Scope_print(tmain);
+    Scope_print(ttest);
+    Scope_delete(tmain);
+    Scope_print(tglobal);
+
+
+    // BUG: Actually, deleting a functions scope table, doesn't remove the
+    // associated symbols in the parent table (e.g. removing main table doesn't
+    // remove the main symbol in the global table). Maybe do a  bunch of
+    // functions like ScopeTable_insertsymbolfunction ScopeTable_insertsumbolvariable etc
+    // to handle this cases.
     return 0;
 }
