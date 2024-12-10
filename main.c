@@ -29,29 +29,80 @@ main(int argc, char *argv[])
     }
     */
     SymbolTable *st;
-    ScopeTable *global;
+    ScopeTable *tglobal, *tmain, *ttest;
+    Symbol *main, *a, *b, *c;
     Symbol *sym;
-    Symbol *retrieve;
+    
 
-    if ((st = SymbolTable_new()) == NULL) {
+    if ((st = SymbolTable_new("global")) == NULL) {
 	perror("SymbolTable_new");
 	exit(1);
     }
-    global = st->scopetables;
-    if ((sym = Symbol_new()) == NULL) {
+
+    tglobal = st->scopetables;
+    if ((main = Symbol_new()) == NULL) {
 	perror("Symbol_new");
 	exit(1);
     }
-    sym->name = "main";
-    sym->kind = KIND_FUNC;
-    sym->type = TYPE_INT;
-    ScopeTable_insertsymbol(global, sym);
+    main->name = "main";
+    main->kind = K_FUNC;
+    main->type = T_INT;
+    ScopeTable_insertsymbol(tglobal, main);
 
-    if ((retrieve = ScopeTable_getsymbol(global, "main")) == NULL) {
+    // insert sub scopetables 
+    if ((tmain = ScopeTable_new("main")) == NULL) {
+	perror("ScopeTable_new");
+	exit(1);
+    }
+    if (ScopeTable_insertsubtable(tglobal, tmain) == NULL) {
+	perror("ScopeTable_new");
+	exit(1);
+    }
+    if ((ttest = ScopeTable_new("test")) == NULL) {
+	perror("ScopeTable_new");
+	exit(1);
+    }
+    if (ScopeTable_insertsubtable(tglobal, ttest) == NULL) {
+	perror("ScopeTable_new");
+	exit(1);
+    }
+    
+
+    if ((a = Symbol_new()) == NULL) {
+	perror("Symbol_new");
+	exit(1);
+    }
+    a->name = "a";
+    a->kind = K_VAR;
+    a->type = T_INT;
+    ScopeTable_insertsymbol(tmain, a);
+
+    if ((b = Symbol_new()) == NULL) {
+	perror("Symbol_new");
+	exit(1);
+    }
+    b->name = "b";
+    b->kind = K_VAR;
+    b->type = T_INT;
+    ScopeTable_insertsymbol(tmain, b);
+
+    if ((c = Symbol_new()) == NULL) {
+	perror("Symbol_new");
+	exit(1);
+    }
+    c->name = "c";
+    c->kind = K_VAR;
+    c->type = T_INT;
+    ScopeTable_insertsymbol(tmain, c);
+
+    if ((sym = ScopeTable_getsymbol(tmain, "a")) == NULL) {
 	perror("ScopeTable_getsymbol");
 	exit(1);
     }
-    printf("name: %s, kind: %d, type: %d\n", retrieve->name, retrieve->kind, retrieve->type);
-    // TODO: need to test insertion of subtables
+
+    ScopeTable_print(tglobal);
+    ScopeTable_print(tmain);
+    ScopeTable_print(ttest);
+    // TODO: need to check inserting already existing symbol returns and error
     return 0;
 }

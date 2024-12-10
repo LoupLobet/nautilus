@@ -61,9 +61,10 @@ ScopeTable_getsymbol(ScopeTable *t, char *name)
 ScopeTable *
 ScopeTable_insertsubtable(ScopeTable *t, ScopeTable *sub)
 {
-	if (t->subtables == NULL) {
+	if (t->subtables == NULL)
 		t->subtables = sub;
-	}
+	else 
+		t->lastsubtable->next = sub;
 	t->lastsubtable = sub;
 	sub->parenttable = t;
 	return sub;
@@ -77,12 +78,9 @@ ScopeTable_insertsymbol(ScopeTable *t, Symbol *sym)
 
 	// symbols are stored in a hash table
 	hash = fnv1a(sym->name, strlen(sym->name)) % t->symbols->nbucket;
-	printf("hash: %d\n", hash);
-	printf("%p\n", t->symbols->buckets[hash]);
 	if (t->symbols->buckets[hash]->tail == NULL) {
 		t->symbols->buckets[hash]->head = sym;
 	} else {
-		puts("OK");
 		// check for already existing symbol
 		for (p = t->symbols->buckets[hash]->head; p->next != NULL; p = p->next) {
 			if (!strcmp(p->name, sym->name))
@@ -96,7 +94,7 @@ ScopeTable_insertsymbol(ScopeTable *t, Symbol *sym)
 }
 
 ScopeTable *
-ScopeTable_new(void)
+ScopeTable_new(char *name)
 {
 	ScopeTable *t;
 	int i;
@@ -107,6 +105,7 @@ ScopeTable_new(void)
 	t->parenttable = NULL;
 	t->lastsubtable = NULL;
 	t->next = NULL;
+	t->name = name;
 	// init symbol hash table
 	if ((t->symbols = malloc(sizeof(HashTable))) == NULL) {
 		free(t);
@@ -144,16 +143,48 @@ Symbol_new(void)
 }
 
 SymbolTable *
-SymbolTable_new(void)
+SymbolTable_new(char *name)
 {
 	SymbolTable *st;
 
 	if ((st = malloc(sizeof(SymbolTable))) == NULL)
 		return NULL;
-	if ((st->scopetables = ScopeTable_new()) == NULL) {
+	if ((st->scopetables = ScopeTable_new(name)) == NULL) {
 		free(st);
 		return NULL;
 	}
 	return st;
 }
 
+#ifndef RELEASE
+
+void
+ScopeTable_print(ScopeTable *t)
+{
+	int i;
+	int nosym;
+	Symbol *sym;
+	ScopeTable *subtable;
+
+	printf("\n--------------------------\n");
+	printf("NAME: %s\n", t->name);
+	printf("SYMBOLS:\n");
+	nosym = 1;
+	for (i = 0; i < t->symbols->nbucket; i++) {
+		for (sym = t->symbols->buckets[i]->head; sym != NULL; sym = sym->next) {
+			printf("-> %s\t%d\t%d\n", sym->name, sym->kind, sym->type);
+			nosym = 0;
+		}
+	}
+	if (nosym)
+		printf("-> NULL\n");
+	printf("SUBSCOPES(depth 1):\n");
+	if (t->subtables == NULL)
+		printf("-> NULL\n");
+	for (subtable = t->subtables; subtable != NULL; subtable = subtable->next) {
+		printf("-> %s\n", subtable->name);
+	}
+	printf("--------------------------\n");
+}
+
+#endif

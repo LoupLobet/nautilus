@@ -66,187 +66,187 @@ DIGIT [0-9]
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_DOT;
+				return L_DOT;
 			}
 ;			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_SEMICOLON;
+				return L_SEMICOLON;
 			}
 =			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_EQUAL;
+				return L_EQUAL;
 			}
 \{			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_LEFTCURLY;
+				return L_LEFTCURLY;
 			}
 \}			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_RIGHTCURLY;
+				return L_RIGHTCURLY;
 			}
 \(			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_LEFTBRACE;
+				return L_LEFTBRACE;
 			}
 \)			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_RIGHTBRACE;
+				return L_RIGHTBRACE;
 			}
 \[			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_LEFTBRACKET;
+				return L_LEFTBRACKET;
 			}
 \]			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_RIGHTBRACKET;
+				return L_RIGHTBRACKET;
 			}
 ,			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_COMMA;
+				return L_COMMA;
 			}
 \<			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_LESSTHAN;
+				return L_LESSTHAN;
 			}
 \>			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_GREATERTHAN;
+				return L_GREATERTHAN;
 			}
 \+			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_ADD;
+				return L_ADD;
 			}
 \-			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_SUB;
+				return L_SUB;
 			}
 \*			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_STAR;
+				return L_STAR;
 			}
 \@			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_NAUTILUS;
+				return L_NAUTILUS;
 			}
 \/			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_DIV;
+				return L_DIV;
 			}
 if			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_IF;
+				return L_IF;
 			}
 else			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_ELSE;
+				return L_ELSE;
 			}
 "!="			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_NOTEQUAL;
+				return L_NOTEQUAL;
 			}
 "||"			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_OR;
+				return L_OR;
 			}
 "&&"			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_AND;
+				return L_AND;
 			}
 !			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_NOT;
+				return L_NOT;
 			}
 \%			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_MOD;
+				return L_MOD;
 			}
 while			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_WHILE;
+				return L_WHILE;
 			}
 for			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_FOR;
+				return L_FOR;
 			}
 return			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_RETURN;
+				return L_RETURN;
 			}
 func			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_FUNCTION;
+				return L_FUNCTION;
 			}
 int			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_TYPEINT;
+				return L_TYPEINT;
 			}
 float			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_TYPEFLOAT;
+				return L_TYPEFLOAT;
 			}
 string			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_TYPESTRING;
+				return L_TYPESTRING;
 			}
 [0-9]+			{
 				/* litteral integer constant */
@@ -258,7 +258,7 @@ string			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_INTCONST;
+				return L_INTCONST;
 			}
 (({DIGIT}+\.|\.{DIGIT}+|{DIGIT}+\.{DIGIT}+)(e[+-]?{DIGIT}+)?)|({DIGIT}+e[+-]?{DIGIT}+) {
 				/* litteral integer constant */
@@ -270,7 +270,7 @@ string			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
                 		column += yyleng;
-				return T_REALCONST;
+				return L_REALCONST;
         		}
 
 \"([^\"\n]|\"\")*[\"\n]	{
@@ -282,7 +282,7 @@ string			{
 					column = 0;
 				} else {
 					/* here need to insert string in symbol table */
-					return T_STRINGCONST;
+					return L_STRINGCONST;
 				}
 			}
 [a-zA-Z_][a-zA-Z0-9_]*	{
@@ -290,7 +290,7 @@ string			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return T_IDENTIFIER;
+				return L_IDENTIFIER;
 			}
 \n			{
 				column = 0;

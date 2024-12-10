@@ -4,9 +4,9 @@ LEX=lex
 YACC=yacc
 
 CFLAGS=-Wall -pedantic -std=c99
-LDFLAGS= 
+LDFLAGS=
 
-all: naut
+all: clean naut
 
 scanner.c: scanner.l
 	${LEX} $<
@@ -19,3 +19,5 @@ main.o: main.c
 naut: main.o scanner.o symboltable.o
 	${LD} $^ -o $@ ${LDFLAGS}
 
+clean:
+	rm -rf *.o scanner.c
