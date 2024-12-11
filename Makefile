@@ -12,11 +12,11 @@ scanner.c: scanner.l
 	${LEX} $<
 scanner.o: scanner.c
 	${CC} ${CFLAGS} -c $<
-symboltable.o: symboltable.c
+symbol.o: symbol.c
 	${CC} ${CFLAGS} -c $<
 main.o: main.c
 	${CC} ${CFLAGS} -c $<
-naut: main.o scanner.o symboltable.o
+naut: main.o scanner.o symbol.o
 	${LD} $^ -o $@ ${LDFLAGS}
 
 clean:

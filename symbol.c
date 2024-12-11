@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "symbol.h"
+#include "symboltable.h"
 
 unsigned int
 fnv1a(char *s, long n)

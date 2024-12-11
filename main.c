@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "symboltable.h"
+#include "symbol.h"
 
 extern int yylex(void);
 extern FILE *yyin;
