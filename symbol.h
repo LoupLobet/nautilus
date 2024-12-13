@@ -32,18 +32,24 @@ typedef struct symbolTable SymbolTable;
 
 struct auxFunction {
 	Scope *scope;
+	int type;
+	int narg;
+	Symbol *args;
 };
 
 struct auxVariable {
+	int type;
 };
 
 struct scope {
 	char *name;
-	SymbolTable *symbols; // hash table of symbols
-	Scope *parenttable;   // parent scope table
-	Scope *subtables;     // sub tables linked list
-	Scope *lastsubtable;  // last sub tables in the linked list
-	Scope *next;          // next ScopeTable at the same block level
+	SymbolTable *symbols;
+	Scope *parent;
+	Scope *childs;
+	// NOTE: lastchild can be something better, juste qof pointer to
+	// the list tail, but a bit dirty, might be better.
+	Scope *lastchild;
+	Scope *next;
 };
 
 struct scopeTree {
@@ -53,7 +59,6 @@ struct scopeTree {
 struct symbol {
 	char *name;
 	int kind;
-	int type;
 	Aux aux;
 
 	Symbol *next;
@@ -72,15 +77,15 @@ struct bucket {
 
 
 unsigned int	 fnv1a(char *, long);
-void	 Scope_delete(Scope *); // TODO:
-Symbol	*Scope_getsymbol(Scope *, char *); // TODO: (to check)
-Scope	*Scope_insertsubtable(Scope *, Scope *); // TODO: (to check)
-Symbol	*Scope_insertsymbol(Scope *, Symbol *); // TODO: (to check)
-Scope	*Scope_new(char *); // TODO:
-Symbol	*Scope_newfunc(Scope *, Symbol *);
-Symbol	*Scope_newvar(Scope *, Symbol *);
+Symbol	*Scope_addsymbol(Scope *, Symbol *);
+void	 Scope_del(Scope *);
+int	 Scope_delsymbol(Scope *, char *);
+Symbol	*Scope_getsymbol(Scope *, char *);
+Scope	*Scope_addchild(Scope *, Scope *);
+Scope	*Scope_new(char *);
 ScopeTree	*ScopeTree_new(Scope *);
-Symbol	*Symbol_new(void);
+Symbol	*Symbol_newfunction(char *, int, Symbol *, int);
+Symbol	*Symbol_newvariable(char *, int);
 
 
 #ifndef RELEASE

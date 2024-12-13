@@ -7,120 +7,77 @@ extern int yylex(void);
 extern FILE *yyin;
 extern char *yytext;
 
-int
-main(int argc, char *argv[])
-{
-    /*
-    FILE *fp;
-    int token;
+int main(int argc, char *argv[]) {
+	/*
+	FILE *fp;
+	int token;
 
-    if (argc == 2) {
-	if ((fp = fopen(argv[1], "r")) == NULL) {
-	    perror("fopen");
-	    exit(1);
+	if (argc == 2) {
+			if ((fp = fopen(argv[1], "r")) == NULL) {
+		perror("fopen");
+		exit(1);
+			}
+			else {
+		yyin = fp;
+		while ((token = yylex())) {
+				printf("text: %s,\tid: %d\n", yytext, token);
+		}
+		fclose(fp);
+			}
 	}
-	else {
-	    yyin = fp;
-	    while ((token = yylex())) {
-		printf("text: %s,\tid: %d\n", yytext, token);
-	    }
-	    fclose(fp);
+	*/
+	ScopeTree *st;
+	Scope *root;
+	Symbol *symmain, *symargc, *symargv;
+	Symbol *symage;
+
+	if ((root = Scope_new("global")) == NULL) {
+		perror("Scope_new");
+		exit(1);
 	}
-    }
-    */
-    SymbolTable *st;
-    Scope *tglobal, *tmain, *ttest;
-    Symbol *main, *a, *b, *c, *a2;
-    Symbol *sym;
-    
 
-    if ((st = SymbolTable_new("global")) == NULL) {
-	perror("SymbolTable_new");
-	exit(1);
-    }
+	if ((st = ScopeTree_new(root)) == NULL) {
+		perror("ScopeTree_new");
+		exit(1);
+	}
 
-    tglobal = st->root;
-    if ((main = Symbol_new()) == NULL) {
-	perror("Symbol_new");
-	exit(1);
-    }
-    main->name = "main";
-    main->kind = K_FUNC;
-    main->type = T_INT;
-    Scope_insertsymbol(tglobal, main);
+	// create a main function
 
-    // insert sub scopetables 
-    if ((tmain = Scope_new("main")) == NULL) {
-	perror("ScopeTable_new");
-	exit(1);
-    }
-    if (Scope_insertsubtable(tglobal, tmain) == NULL) {
-	perror("ScopeTable_new");
-	exit(1);
-    }
-    if ((ttest = Scope_new("test")) == NULL) {
-	perror("ScopeTable_new");
-	exit(1);
-    }
-    if (Scope_insertsubtable(tglobal, ttest) == NULL) {
-	perror("ScopeTable_new");
-	exit(1);
-    }
+	if ((symage = Symbol_newvariable("age", T_INT)) == NULL) {
+		perror("Symbol_newvariable");
+		exit(1);
+	}
+	if (Scope_addsymbol(root, symage) == NULL) {
+		perror("Symbol_newvariable");
+		exit(1);
+	}
 
-    if ((a = Symbol_new()) == NULL) {
-	perror("Symbol_new");
-	exit(1);
-    }
-    a->name = "a";
-    a->kind = K_VAR;
-    a->type = T_INT;
-    Scope_insertsymbol(tmain, a);
-
-    if ((a2 = Symbol_new()) == NULL) {
-	perror("Symbol_new");
-	exit(1);
-    }
-    a2->name = "a";
-    a2->kind = K_VAR;
-    a2->type = T_INT;
-    if (Scope_insertsymbol(ttest, a2) == NULL) {
-	perror("SymbolTable_insertsymbol");
-    }
-
-    if ((b = Symbol_new()) == NULL) {
-	perror("Symbol_new");
-	exit(1);
-    }
-    b->name = "b";
-    b->kind = K_VAR;
-    b->type = T_INT;
-    Scope_insertsymbol(tmain, b);
-
-    if ((c = Symbol_new()) == NULL) {
-	perror("Symbol_new");
-	exit(1);
-    }
-    c->name = "c";
-    c->kind = K_VAR;
-    c->type = T_INT;
-    Scope_insertsymbol(tmain, c);
-
-    if ((sym = Scope_getsymbol(tmain, "a")) == NULL) {
-	perror("ScopeTable_getsymbol");
-	exit(1);
-    }
-
-    Scope_print(tglobal);
-    Scope_print(tmain);
-    Scope_print(ttest);
-    Scope_delete(tmain);
-    Scope_print(tglobal);
+	if ((symargc = Symbol_newvariable("argc", T_INT)) == NULL) {
+		perror("Symbol_newvariable");
+		exit(1);
+	}
+	if ((symargv = Symbol_newvariable("argv", T_INT)) == NULL) {
+		perror("Symbol_newvariable");
+		exit(1);
+	}
+	symargc->next = symargv;
+	if ((symmain = Symbol_newfunction("main", T_INT, symargc, 2)) == NULL) {
+		perror("Symbol_newfunction");
+		exit(1);
+	}
+	Scope_addsymbol(root, symmain);
 
 
-    // BUG: Actually, deleting a functions scope table, doesn't remove the
-    // associated symbols in the parent table (e.g. removing main table doesn't
-    // remove the main symbol in the global table). Maybe do a  bunch of
-    // functions like ScopeTable_insertsymbolfunction ScopeTable_insertsumbolvariable etc
-    // to handle this cases.
-    return 0;
+	Scope_print(root);
+	Scope_print(root->childs);
+	printf(">>>>>>> %d\n", Scope_delsymbol(root, "main"));
+	Scope_print(root);
+
+	// BUG: Scope_del behaviour isn't clear enough, maybe it would be better to clearly
+	// split Scope_del(), and Scope_delsymbol() (K_FUNC case), to allow better modularity
+	// in the functions usage (i.e. do not link scope deletion and function symbol deletion
+	// --- keeping them as two separated operations, because we can imagine that symbol can
+	// be deleted without deleting his scope, ... I don't know ...
+	return 0;
+
 }
