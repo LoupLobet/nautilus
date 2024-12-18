@@ -50,7 +50,6 @@ typedef struct {
 #define L_TYPEINT 305
 #define L_TYPEFLOAT 306
 #define L_TYPESTRING 307
-#define L_NAUTILUS 308
 
 #define NB_SYMBOLS 33
 

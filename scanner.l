@@ -152,12 +152,6 @@ DIGIT [0-9]
 				column += yyleng;
 				return L_STAR;
 			}
-\@			{
-				yypos.firstline = yylineno;
-				yypos.firstcolumn = column;
-				column += yyleng;
-				return L_NAUTILUS;
-			}
 \/			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;

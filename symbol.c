@@ -4,6 +4,13 @@
 
 #include "symbol.h"
 
+// https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
+#define FNV_OFFSET_BASIS 2166136261 // 32-bit
+#define FNV_PRIME 16777619          // 32-bit
+#define HASH_TABLE_SIZE 16
+
+unsigned int	 fnv1a(char *, long);
+
 unsigned int
 fnv1a(char *s, long n)
 {
@@ -43,16 +50,16 @@ Scope_addsymbol(Scope *scope, Symbol *sym)
 	// if the symbol is a function, link the symbol scope with
 	// the upper scope.
 	if (sym->kind == K_FUNC) {
-		if (Scope_addchild(scope, ((AuxFunction *)sym->aux)->scope) == NULL)
+		if (Scope_addchild(scope, AUX_FUNC(sym)->scope) == NULL)
 			return NULL;
 	}
 	return sym;
 }
 
 void
-Scope_del(Scope *parent, Scope *scope)
+Scope_delchild(Scope *parent, Scope *scope)
 {
-	// Scope_del should not be used directly on non-anonymous scopes
+	// Scope_delchild should not be used directly on non-anonymous scopes
 	// because it doesn't delete the associated scope symbol in parent
 	// scope.
 	Scope *p, *child, *last;
@@ -61,7 +68,7 @@ Scope_del(Scope *parent, Scope *scope)
 
 	// delete sub scopes
 	for (p = scope->childs; p != NULL; p = p->next)
-		Scope_del(scope, p);
+		Scope_delchild(scope, p);
 	// remove the scope entry from the parent child list
 	if (parent != NULL) {
 		last = NULL;
@@ -88,6 +95,7 @@ Scope_del(Scope *parent, Scope *scope)
 	}
 	free(scope->symbols->buckets);
 	free(scope->symbols);
+	free(scope->name);
 	free(scope);
 }
 
@@ -110,13 +118,13 @@ Scope_delsymbol(Scope *scope, char *name)
 			else
 				last->next = sym->next;
 			if (sym->kind == K_FUNC) {
-				scopedel = ((AuxFunction *)(sym->aux))->scope;
+				scopedel = AUX_FUNC(sym)->scope;
 				// if the symbol is a function, delete its scope and its
 				// variables / subscopes.
-				Scope_del(scope, scopedel);
+				Scope_delchild(scope, scopedel);
 				// delete function arguments (allocated)
 				next = NULL;
-				arg = ((AuxFunction *)(sym->aux))->args;
+				arg = AUX_FUNC(sym)->args;
 				while (arg != NULL) {
 					next = arg->next;
 					free(arg);
@@ -151,11 +159,12 @@ Scope_getsymbol(Scope *scope, char *name)
 Scope *
 Scope_addchild(Scope *scope, Scope *child)
 {
-	if (scope->childs == NULL) {
+	if (scope->childs == NULL)
 		scope->childs = child;
-		scope->lastchild = child;
-	} else 
-		scope->lastchild->next = child;
+	else {
+		child->next = scope->childs;
+		scope->childs = child;
+	}
 	child->parent = scope;
 	return child;
 }
@@ -170,16 +179,20 @@ Scope_new(char *name)
 		return NULL;
 	scope->childs = NULL;
 	scope->parent = NULL;
-	scope->lastchild = NULL;
 	scope->next = NULL;
-	scope->name = name;
+	if ((scope->name = strdup(name)) == NULL) {
+		free(scope);
+		return NULL;
+	}
 	// init symbol hash table
 	if ((scope->symbols = malloc(sizeof(SymbolTable))) == NULL) {
+		free(scope->name);
 		free(scope);
 		return NULL;
 	}
 	if ((scope->symbols->buckets = malloc(sizeof(struct bucket *) * HASH_TABLE_SIZE)) == NULL) {
 		free(scope->symbols);
+		free(scope->name);
 		free(scope);
 		return NULL;
 	}
@@ -188,6 +201,7 @@ Scope_new(char *name)
 		if ((scope->symbols->buckets[i] = malloc(sizeof(struct bucket))) == NULL) {
 			free(scope->symbols->buckets);
 			free(scope->symbols);
+			free(scope->name);
 			free(scope);
 			return NULL;
 		}
@@ -214,7 +228,7 @@ Symbol_newfunction(char *name, int type, Symbol *args, int narg)
 {
 	Scope *scope;
 	Symbol *sym;
-	AuxFunction *aux;
+	AuxFunc *aux;
 
 	if ((sym = malloc(sizeof(Symbol))) == NULL)
 		return NULL;
@@ -223,7 +237,7 @@ Symbol_newfunction(char *name, int type, Symbol *args, int narg)
 		return NULL;
 	}
 	sym->kind = K_FUNC;
-	if ((aux = malloc(sizeof(AuxFunction))) == NULL) {
+	if ((aux = malloc(sizeof(AuxFunc))) == NULL) {
 		free(sym->name);
 		free(sym);
 		return NULL;
@@ -248,7 +262,7 @@ Symbol *
 Symbol_newvariable(char *name, int type)
 {
 	Symbol *sym;
-	AuxVariable *aux;
+	AuxVar *aux;
 
 	if ((sym = malloc(sizeof(Symbol))) == NULL)
 		return NULL;
@@ -257,7 +271,7 @@ Symbol_newvariable(char *name, int type)
 		return NULL;
 	}
 	sym->kind = K_VAR;
-	if ((aux = malloc(sizeof(AuxFunction))) == NULL) {
+	if ((aux = malloc(sizeof(AuxFunc))) == NULL) {
 		free(sym->name);
 		free(sym);
 		return NULL;
@@ -287,13 +301,13 @@ Scope_print(Scope *scope)
 			switch (sym->kind){
 			case K_VAR:
 				printf("-> %s\t%s:\n", sym->name, "K_VAR");
-				printf("\ttype: %d\n", ((AuxVariable *)sym->aux)->type);
+				printf("\ttype: %d\n", AUX_VAR(sym)->type);
 				break;
 			case K_FUNC:
 				printf("-> %s\t%s:\n", sym->name, "K_FUNC");
-				printf("\ttype: %d\n", ((AuxFunction *)sym->aux)->type);
-				printf("\targs(%d): ", ((AuxFunction *)sym->aux)->narg);
-				for (arg = ((AuxFunction *)sym->aux)->args; arg != NULL; arg = arg->next) { 
+				printf("\ttype: %d\n", AUX_VAR(sym)->type);
+				printf("\targs(%d): ", AUX_FUNC(sym)->narg);
+				for (arg = AUX_FUNC(sym)->args; arg != NULL; arg = arg->next) { 
 					printf("%s, ", arg->name);
 				}
 				printf("\n");
