@@ -50,14 +50,31 @@ Scope_addsymbol(Scope *scope, Symbol *sym)
 }
 
 void
-Scope_del(Scope *scope)
+Scope_del(Scope *parent, Scope *scope)
 {
-	Scope *p, *scopedel, *last;
+	// Scope_del should not be used directly on non-anonymous scopes
+	// because it doesn't delete the associated scope symbol in parent
+	// scope.
+	Scope *p, *child, *last;
 	Symbol *sym, *symdel;
 	int i;
 
+	// delete sub scopes
 	for (p = scope->childs; p != NULL; p = p->next)
-		Scope_del(p);
+		Scope_del(scope, p);
+	// remove the scope entry from the parent child list
+	if (parent != NULL) {
+		last = NULL;
+		for (child = parent->childs; child != NULL; child = child->next) {
+			if (child == scope) {
+				if (last == NULL)
+					parent->childs = child->next;
+				else
+					last->next = child->next;
+			}
+			last = child;
+		}
+	}
 	// free all the buckets
 	for (i = 0; i < scope->symbols->nbucket; i++) {
 		if (scope->symbols->buckets[i]->head != NULL) {
@@ -71,68 +88,48 @@ Scope_del(Scope *scope)
 	}
 	free(scope->symbols->buckets);
 	free(scope->symbols);
-	// loop throught parent table sub tables to delete t
-	if (scope->parent != NULL) {
-		if (scope->parent->childs == scope) { // t is the only sub table
-			scopedel = scope;
-			scope->parent->childs = scope->next;
-			free(scopedel);
-		} else {
-			last = NULL;
-			for (p = scope->parent->childs; p != NULL; p = p->next) {
-				if (p == scope) {
-					if (last == NULL)
-						scope->parent->childs = p->next;
-					else
-						last->next = p->next;
-					free(p);
-				}
-				last = p;
-			}
-		}
-	} else 
-		free(scope);
+	free(scope);
 }
 
 int
 Scope_delsymbol(Scope *scope, char *name)
 {
 	unsigned int hash;
-	Symbol *sym, *last;
+	Symbol *arg, *sym, *last, *next;
+	Scope *scopedel;
 
 	hash = fnv1a(name, strlen(name)) % scope->symbols->nbucket;
 	last = NULL;
 	if (scope->symbols->buckets[hash]->head == NULL)
 		return 1;
 	for (sym = scope->symbols->buckets[hash]->head; sym != NULL; sym = sym->next) {
-		if (!strcmp(sym->name, name)) {
-			// symbol exists in the scope delete it
-			switch (sym->kind) {
-			case K_VAR:
-				if (last == NULL)
-					scope->symbols->buckets[hash]->head = sym->next;
-				else
-					last->next = sym->next;
-				free(sym);
-				break;
-			case K_FUNC:
-				Scope_del(((AuxFunction *)sym->aux)->scope);
-				if (last == NULL)
-					scope->symbols->buckets[hash]->head = sym->next;
-				else
-					last->next = sym->next;
-				free(sym);
-				break;
-			default:
-				// if this happen the problem is between chair and monitor :)
-				fprintf(stderr, "unexpected error: ivalid symbol kind: %d\n", sym->kind);
-				exit(1);
+		// symbol exists in the scope delete it
+		if (!strcmp(sym->name, name)) { 
+			if (last == NULL)
+				scope->symbols->buckets[hash]->head = sym->next;
+			else
+				last->next = sym->next;
+			if (sym->kind == K_FUNC) {
+				scopedel = ((AuxFunction *)(sym->aux))->scope;
+				// if the symbol is a function, delete its scope and its
+				// variables / subscopes.
+				Scope_del(scope, scopedel);
+				// delete function arguments (allocated)
+				next = NULL;
+				arg = ((AuxFunction *)(sym->aux))->args;
+				while (arg != NULL) {
+					next = arg->next;
+					free(arg);
+					arg = next;
+				}
 			}
-			return 0;
+			free(sym->aux);
+			free(sym->name);
+			free(sym);
 		}
 		last = sym;
 	}
-	return 1;
+	return 0;
 }
 
 Symbol *
@@ -221,9 +218,13 @@ Symbol_newfunction(char *name, int type, Symbol *args, int narg)
 
 	if ((sym = malloc(sizeof(Symbol))) == NULL)
 		return NULL;
-	sym->name = name;
+	if ((sym->name = strdup(name)) == NULL) {
+		free(sym);
+		return NULL;
+	}
 	sym->kind = K_FUNC;
 	if ((aux = malloc(sizeof(AuxFunction))) == NULL) {
+		free(sym->name);
 		free(sym);
 		return NULL;
 	}
@@ -234,6 +235,7 @@ Symbol_newfunction(char *name, int type, Symbol *args, int narg)
 	// create function scope
 	if ((scope = Scope_new(name)) == NULL) {
 		free(aux);
+		free(sym->name);
 		free(sym);
 		return NULL;
 	}
@@ -250,9 +252,13 @@ Symbol_newvariable(char *name, int type)
 
 	if ((sym = malloc(sizeof(Symbol))) == NULL)
 		return NULL;
-	sym->name = name;
+	if ((sym->name = strdup(sym->name = name)) == NULL) {
+		free(sym);
+		return NULL;
+	}
 	sym->kind = K_VAR;
 	if ((aux = malloc(sizeof(AuxFunction))) == NULL) {
+		free(sym->name);
 		free(sym);
 		return NULL;
 	}

@@ -78,7 +78,7 @@ struct bucket {
 
 unsigned int	 fnv1a(char *, long);
 Symbol	*Scope_addsymbol(Scope *, Symbol *);
-void	 Scope_del(Scope *);
+void	 Scope_del(Scope *, Scope *);
 int	 Scope_delsymbol(Scope *, char *);
 Symbol	*Scope_getsymbol(Scope *, char *);
 Scope	*Scope_addchild(Scope *, Scope *);

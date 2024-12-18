@@ -70,14 +70,9 @@ int main(int argc, char *argv[]) {
 
 	Scope_print(root);
 	Scope_print(root->childs);
-	printf(">>>>>>> %d\n", Scope_delsymbol(root, "main"));
+	Scope_delsymbol(root, "main");
 	Scope_print(root);
 
-	// BUG: Scope_del behaviour isn't clear enough, maybe it would be better to clearly
-	// split Scope_del(), and Scope_delsymbol() (K_FUNC case), to allow better modularity
-	// in the functions usage (i.e. do not link scope deletion and function symbol deletion
-	// --- keeping them as two separated operations, because we can imagine that symbol can
-	// be deleted without deleting his scope, ... I don't know ...
 	return 0;
 
 }
