@@ -14,9 +14,11 @@ scanner.o: scanner.c
 	${CC} ${CFLAGS} -c $<
 symbol.o: symbol.c
 	${CC} ${CFLAGS} -c $<
+util.o: util.c
+	${CC} ${CFLAGS} -c $<
 main.o: main.c
 	${CC} ${CFLAGS} -c $<
-naut: main.o scanner.o symbol.o
+naut: main.o scanner.o symbol.o util.o
 	${LD} $^ -o $@ ${LDFLAGS}
 
 clean:
