@@ -1,4 +1,5 @@
 %{
+#include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
@@ -78,7 +79,7 @@ DIGIT [0-9]
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return L_EQUAL;
+				return L_ASSIGN;
 			}
 \{			{
 				yypos.firstline = yylineno;
@@ -126,13 +127,25 @@ DIGIT [0-9]
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return L_LESSTHAN;
+				return L_LT;
 			}
 \>			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return L_GREATERTHAN;
+				return L_GT;
+			}
+\<=			{
+				yypos.firstline = yylineno;
+				yypos.firstcolumn = column;
+				column += yyleng;
+				return L_LEQ;
+			}
+\>=			{
+				yypos.firstline = yylineno;
+				yypos.firstcolumn = column;
+				column += yyleng;
+				return L_GEQ;
 			}
 \+			{
 				yypos.firstline = yylineno;
@@ -145,6 +158,18 @@ DIGIT [0-9]
 				yypos.firstcolumn = column;
 				column += yyleng;
 				return L_SUB;
+			}
+\++			{
+				yypos.firstline = yylineno;
+				yypos.firstcolumn = column;
+				column += yyleng;
+				return L_INC;
+			}
+\--			{
+				yypos.firstline = yylineno;
+				yypos.firstcolumn = column;
+				column += yyleng;
+				return L_DEC;
 			}
 \*			{
 				yypos.firstline = yylineno;
@@ -174,7 +199,13 @@ else			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return L_NOTEQUAL;
+				return L_NEQ;
+			}
+"=="			{
+				yypos.firstline = yylineno;
+				yypos.firstcolumn = column;
+				column += yyleng;
+				return L_EQ;
 			}
 "||"			{
 				yypos.firstline = yylineno;
@@ -236,11 +267,11 @@ float			{
 				column += yyleng;
 				return L_TYPEFLOAT;
 			}
-string			{
+char			{
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
 				column += yyleng;
-				return L_TYPESTRING;
+				return L_TYPECHAR;
 			}
 [0-9]+			{
 				/* litteral integer constant */
@@ -266,20 +297,52 @@ string			{
                 		column += yyleng;
 				return L_REALCONST;
         		}
-
-\"([^\"\n]|\"\")*[\"\n]	{
-				/* litteral string constant */
+	/*
+	 \"([^\"\n]|\"\")*[\"\n]	{
+					yypos.firstline = yylineno;
+					yypos.firstcolumn = column;
+					if (strchr(yytext, '\n')) {
+						yyerror("Newline in string");
+						column = 0;
+					} else {
+						return L_STRINGCONST;
+					}
+				}
+	*/
+\'([^\\\'\n\t\b\r\a\f\v]|\\n|\\t|\\b|\\r|\\a|\\'|\\\|\\f|\\v|\\0)?\'	{
+				/* litteral char constant */
+				char val;
+				printf("<%s>\n", yytext);
+				if (!strcmp(yytext, "'\\n'"))
+					val = '\n';
+				else if (!strcmp(yytext, "'\\t'")) {
+					puts("TAB");
+					val = '\t';
+				} else if (!strcmp(yytext, "'\\b'"))
+					val = '\b';
+				else if (!strcmp(yytext, "'\\r'"))
+					val = '\r';
+				else if (!strcmp(yytext, "'\\a'"))
+					val = '\a';
+				else if (!strcmp(yytext, "'\\''"))
+					val = '\'';
+				else if (!strcmp(yytext, "'\\\'"))
+					val = '\\';
+				else if (!strcmp(yytext, "'\\f'"))
+					val = '\f';
+				else if (!strcmp(yytext, "'\\v'"))
+					val = '\v';
+				else if (!strcmp(yytext, "'\\0'"))
+					val = '\0';
+				else
+					val = yytext[1];
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;
-				if (strchr(yytext, '\n')) {
-					yyerror("Newline in string");
-					column = 0;
-				} else {
-					/* here need to insert string in symbol table */
-					return L_STRINGCONST;
-				}
+				yyval.cval = val;
+				column += yyleng;
+				return L_CHARCONST;
 			}
-[a-zA-Z_][a-zA-Z0-9_]*	{
+[a-zA-Z][a-zA-Z0-9_-]*	{
 				/* here need to insert identifier in symbol table */
 				yypos.firstline = yylineno;
 				yypos.firstcolumn = column;

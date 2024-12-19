@@ -4,6 +4,7 @@
 typedef union {
 	int ival;
 	double dval;
+	char cval;
 } YYVAL;
 
 typedef struct {
@@ -13,45 +14,58 @@ typedef struct {
 	int lastline;
 } YYPOS;
 
-#define L_EOF 0 
-#define L_ERROR 258 
-#define L_DOT 259 
-#define L_SEMICOLON 260 
-#define L_EQUAL 261 
-#define L_LEFTCURLY 262
-#define L_RIGHTCURLY 263
-#define L_LEFTBRACKET 264 
-#define L_RIGHTBRACKET 265 
-#define L_LEFTBRACE 266 
-#define L_RIGHTBRACE 267 
-#define L_COMMA 268 
-#define L_LESSTHAN 269 
-#define L_GREATERTHAN 270 
-#define L_ADD 271 
-#define L_SUB 272 
-#define L_STAR 273 
-#define L_DIV 274
-#define L_IF 276 
-#define L_ELSE 277
-#define L_NOTEQUAL 279
-#define L_OR 280
-#define L_AND 283
-#define L_MOD 285
-#define L_NOT 286
-#define L_WHILE 293
-#define L_FOR 294
-#define L_RETURN 296
-#define L_REALNUM 298
-#define L_FUNCTION 299
-#define L_STRINGCONST 301
-#define L_INTCONST 302
-#define L_REALCONST 303
-#define L_IDENTIFIER 304
-#define L_TYPEINT 305
-#define L_TYPEFLOAT 306
-#define L_TYPESTRING 307
-
-#define NB_SYMBOLS 33
+enum LEXEME {
+	L_EOF = 0,       // *EOF*
+	L_ERROR = 258,   // *error*
+	// separators
+	L_DOT,           // . 
+	L_SEMICOLON,     // ;
+	L_COMMA,         // ,
+	// brackets
+	L_LEFTCURLY,     // {
+	L_RIGHTCURLY,    // }
+	L_LEFTBRACKET,   // [
+	L_RIGHTBRACKET,  // ]
+	L_LEFTBRACE,     // (
+	L_RIGHTBRACE,    // )
+	// binary op
+	L_ASSIGN,        // =
+	L_ADD,           // +
+	L_SUB,           // -
+	L_STAR,          // *
+	L_DIV,           // /
+	L_MOD,           // %
+	// unary op
+	L_NOT,           // !
+	L_INC,           // ++
+	L_DEC,           // --
+	// binary relations
+	L_EQ,            // ==
+	L_NEQ,           // !=
+	L_OR,            // ||
+	L_AND,           // &&
+	L_LT,            // <
+	L_GT,            // >
+	L_LEQ,           // <=
+	L_GEQ,           // >=
+	// statements
+	L_IF,            // if
+	L_ELSE,          // else
+	L_WHILE,         // while
+	L_FOR,           // for
+	L_RETURN,        // return
+	// consts
+	L_CHARCONST,     // e.g. 'n'
+	L_INTCONST,      // e.g. 123
+	L_REALCONST,     // e.g. 0.123
+	L_IDENTIFIER,    // e.g. myvar
+	// types
+	L_TYPECHAR,      // char
+	L_TYPEINT,       // int
+	L_TYPEFLOAT,     // float
+	// misc
+	L_FUNCTION,      // func
+};
 
 extern YYVAL yyval;
 extern YYPOS yypos;
