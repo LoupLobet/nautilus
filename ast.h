@@ -3,8 +3,8 @@
 
 /*
  * <PROGRAM>               ::= *<EXTERNAL_DECLARATION>
- * <EXTERNAL_DECLARATION>  ::= <FUNC_DECLARATION>
- * <STATEMENT>             ::= <IF> | <ELSE> | <RETURN> | <WHILE> | <FOR> | <INSTRUCTION> | <BLOCK>
+ * <EXTERNAL_DECLARATION>  ::= <FUNC_DECLARATION> | <FUNC_DEFINITION> | <VAR_DECLARATION> | <VAR_DEFINITION>
+ * <STATEMENT>             ::= <IF> | <ELSE> | <RETURN> | <WHILE> | <FOR> | <INSTRUCTION> | <BLOCK> | <VAR_DECLARATION> | <VAR_DEFINITION>
  * <INSTRUCTION>           ::= <EXPRESSION> ";"
  * <RETURN>                ::= "return" <EXPRESSION>
  * <IF>                    ::= "if" "(" <EXPRESSION> ")" <BLOCK>
@@ -13,11 +13,15 @@
  * <WHILE>                 ::= "while" "(" <EXPRESSION> ")" <BLOCK>
  * <FOR>                   ::= "for" "(" <EXPRESSION> ";" <EXPRESSION> ";" <EXPRESSION> ")" <BLOCK>
  * <FUNC_DECLARATION>      ::= "func" "(" <TYPED_ARG_LIST> ")" *(<TYPE> *("," <TYPE>)) <BLOCK>
+ * <FUNC_DEFINITION>       ::= "func" "(" (<TYPED_ARG_LIST> | <TYPE_LIST>) ")" *(<TYPE> *("," <TYPE>)) ";"
+ * <VAR_DECLARATION>       ::= <TYPE> <IDENTIFIER> "=" <EXPRESSION> ";"
+ * <VAR_DEFINITION>        ::= <TYPE> <IDENTIFIER> ";"
  * <ARG_LIST>              ::= *(<EXPRESSION> *("," <EXPRESSION>))
  * <TYPED_ARG>             ::= <TYPE> <IDENTIFIER>
  * <TYPED_ARG_LIST>        ::= *(<TYPED_ARG> *("," <TYPED_ARG>))
  * <TYPE_LIST>             ::= *(<TYPE> *("," <TYPE>))
- * <EXPRESSION>            ::= <IDENTIFIER> | <BINARY_RELATION> | <BINARY_OPERATION> | <UNARY_OPERATION> | <FUNC_CALL>
+ * <EXPRESSION>            ::= <ASSIGN> | <IDENTIFIER> | <BINARY_RELATION> | <BINARY_OPERATION> | <UNARY_OPERATION> | <FUNC_CALL>
+ * <ASSIGN>                ::= <IDENTIFIER> "=" <EXPRESSION>
  * <RIGHT_UNARY_OPERATION> ::= <EXPRESSION> <UNARY_OP>
  * <LEFT_UNARY_OPERATION>  ::= <UNARY_OP> <EXPRESSION>
  * <LEFT_UNARY_OP>         ::= "!" | "-"
@@ -27,12 +31,13 @@
  * <BINARY_OPERATION>      ::= <EXPRESSION> <BINARY_OP> <EXPRESSION>
  * <BINARY_OP>             ::= "+" | "-" | "*" | "/" | "|" | "^" | "&" | "%"
  * <BLOCK>                 ::= "{" *<STATEMENT> "}"
- * <IDENTIFIER>            ::= "a"-"z" | "A"-"Z" *("a"-"z" | "A"-"Z" | "0"-"9" | "_" | "-")
+ * <IDENTIFIER>            ::= ("a"-"z" | "A"-"Z" | "_") *("a"-"z" | "A"-"Z" | "0"-"9" | "_" | "-")
  * <FUNC_CALL>             ::= <IDENTIFIER> "(" <ARG_LIST> ")"
  * <TYPE>                  ::= <IDENTIFIER>
  */
 
 enum Node {
+	N_ASSIGN,
 	N_ARG_LIST,
 	N_BINARY_OPERATION,
 	N_BINARY_RELATION,
@@ -44,6 +49,7 @@ enum Node {
 	N_FOR,
 	N_FUNC_CALL,
 	N_FUNC_DECLARATION,
+	N_FUNC_DEFINITION,
 	N_ID,
 	N_IF,
 	N_INSTRUCTION,
@@ -56,6 +62,8 @@ enum Node {
 	N_TYPE_LIST,
 	N_TYPED_ARG,
 	N_TYPED_ARG_LIST,
+	N_VAR_DECLARATION,
+	N_VAR_DEFINITION,
 	N_WHILE,
 };
 
@@ -123,6 +131,7 @@ enum Statement {
 	ST_BLOCK,
 };
 
+typedef struct nodeAssign NodeAssign;
 typedef struct nodeArgList NodeArgList;
 typedef struct nodeBinaryOperation NodeBinaryOperation;
 typedef struct nodeBinaryRelation NodeBinaryRelation;
@@ -133,6 +142,7 @@ typedef struct nodeExpression NodeExpression;
 typedef struct nodeExternalDeclaration NodeExternalDeclaration;
 typedef struct nodeFor NodeFor;
 typedef struct nodeFuncCall NodeFuncCall;
+typedef struct nodeFuncDefinition NodeFuncDefinition;
 typedef struct nodeFuncDeclaration NodeFuncDeclaration;
 typedef struct nodeId NodeId;
 typedef struct nodeIf NodeIf;
@@ -146,7 +156,16 @@ typedef struct nodeType NodeType;
 typedef struct nodeTypeList NodeTypeList;
 typedef struct nodeTypedArg NodeTypedArg;
 typedef struct nodeTypedArgList NodeTypedArgList;
+typedef struct nodeVarDeclaration NodeVarDeclaration;
+typedef struct nodeVarDefinition NodeVarDefinition;
 typedef struct nodeWhile NodeWhile;
+
+/*
+ * <ASSIGN> ::= <IDENTIFIER> "=" <EXPRESSION>
+ */
+struct nodeAssign {
+	
+};
 
 /*
  * <ARG_LIST> ::= *(<EXPRESSION> *("," <EXPRESSION>))
@@ -198,7 +217,7 @@ struct nodeElseIf {
 };
 
 /*
- * <EXPRESSION> ::= <IDENTIFIER> | <BINARY_RELATION> | <BINARY_OPERATION> | <UNARY_OPERATION> | <FUNC_CALL>
+ * <EXPRESSION> ::= <ASSIGN> | <IDENTIFIER> | <BINARY_RELATION> | <BINARY_OPERATION> | <UNARY_OPERATION> | <FUNC_CALL>
  */
 struct nodeExpression {
 	enum Node type;
@@ -237,11 +256,19 @@ struct nodeFuncCall {
  */
 struct nodeFuncDeclaration {
 	NodeTypedArgList *arglist;
-	NodeTypeList *typelist;
+	NodeTypeList *retlist;
 };
 
 /*
- * <IDENTIFIER> ::= "a"-"z" | "A"-"Z" *("a"-"z" | "A"-"Z" | "0"-"9" | "_" | "-")
+ * <FUNC_DEFINITION> ::= "func" "(" <TYPE_LIST> ")" *(<TYPE> *("," <TYPE>)) ";"
+ */
+struct nodeFuncDefinition {
+	NodeTypeList *arglist;
+	NodeTypeList *retlist;
+};
+
+/*
+ * <IDENTIFIER> ::= ("a"-"z" | "A"-"Z" | "_") *("a"-"z" | "A"-"Z" | "0"-"9" | "_" | "-")
  */
 struct nodeId {
 	char *text;
@@ -325,19 +352,36 @@ struct nodeTypedArg {
 };
 
 /*
- * <WHILE> ::= "while" "(" <EXPRESSION> ")" <BLOCK>
- */
-struct nodeWhile {
-	NodeExpression *cond;
-	NodeBlock *block;
-};
-
-/*
  * <TYPED_ARG_LIST> ::= *(<TYPED_ARG> *("," <TYPED_ARG>))
  */
 struct nodeTypedArgList {
 	int narg;
 	NodeTypedArg **args;
+};
+
+/*
+ * <VAR_DECLARATION> ::= <TYPE> <IDENTIFIER> "=" <EXPRESSION> ";"
+ */
+struct nodeVarDeclaration {
+	NodeType *type;
+	NodeId *id;
+	NodeExpression *value;
+};
+
+/*
+ * <VAR_DEFINITION> ::= <TYPE> <IDENTIFIER> ";"
+ */
+struct nodeVarDefinition {
+	NodeType *type;
+	NodeId *id;
+};
+
+/*
+ * <WHILE> ::= "while" "(" <EXPRESSION> ")" <BLOCK>
+ */
+struct nodeWhile {
+	NodeExpression *cond;
+	NodeBlock *block;
 };
 
 #endif
