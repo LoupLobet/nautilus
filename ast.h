@@ -3,37 +3,54 @@
 
 /*
  * <PROGRAM>               ::= *<EXTERNAL_DECLARATION>
- * <EXTERNAL_DECLARATION>  ::= <FUNC_DECLARATION> | <FUNC_DEFINITION> | <VAR_DECLARATION> | <VAR_DEFINITION>
- * <STATEMENT>             ::= <IF> | <ELSE> | <RETURN> | <WHILE> | <FOR> | <INSTRUCTION> | <BLOCK> | <VAR_DECLARATION> | <VAR_DEFINITION>
- * <INSTRUCTION>           ::= <EXPRESSION> ";"
- * <RETURN>                ::= "return" <EXPRESSION>
- * <IF>                    ::= "if" "(" <EXPRESSION> ")" <BLOCK>
+ * ---------------------------------------------------------------------------------------------------
+ * <ARG_LIST>              ::= *(<EXPRESSION> *("," <EXPRESSION>))
+ * <ASSIGN>                ::= <IDENTIFIER> "=" <EXPRESSION>
+ * <BINARY_OP>             ::= "+" | "-" | "*" | "/" | "|" | "^" | "&" | "%"
+ * <BINARY_OPERATION>      ::= <EXPRESSION> <BINARY_OP> <EXPRESSION>
+ * <BINARY_REL>            ::= ">" | "<" | "<=" | ">=" | "==" | "!=" | "&&" | "||"
+ * <BINARY_RELATION>       ::= <EXPRESSION> <BINARY_REL> <EXPRESSION>
+ * <BLOCK>                 ::= "{" *<STATEMENT> "}"
  * <ELSE>                  ::= "else" <BLOCK>
  * <ELSE_IF>               ::= "else" "if" "(" <EXPRESSION> ")" <BLOCK
- * <WHILE>                 ::= "while" "(" <EXPRESSION> ")" <BLOCK>
+ * <EXPRESSION>            ::= <ASSIGN>
+ *                           | <BINARY_OPERATION>
+ *                           | <BINARY_RELATION>
+ *                           | <FUNC_CALL> 
+ *                           | <IDENTIFIER>
+ *                           | <UNARY_OPERATION>
+ * <EXTERNAL_DECLARATION>  ::= <FUNC_DECLARATION>
+ *                           | <FUNC_DEFINITION>
+ *                           | <VAR_DECLARATION>
+ *                           | <VAR_DEFINITION>
  * <FOR>                   ::= "for" "(" <EXPRESSION> ";" <EXPRESSION> ";" <EXPRESSION> ")" <BLOCK>
+ * <FUNC_CALL>             ::= <IDENTIFIER> "(" <ARG_LIST> ")"
  * <FUNC_DECLARATION>      ::= "func" "(" <TYPED_ARG_LIST> ")" *(<TYPE> *("," <TYPE>)) <BLOCK>
  * <FUNC_DEFINITION>       ::= "func" "(" (<TYPED_ARG_LIST> | <TYPE_LIST>) ")" *(<TYPE> *("," <TYPE>)) ";"
- * <VAR_DECLARATION>       ::= <TYPE> <IDENTIFIER> "=" <EXPRESSION> ";"
- * <VAR_DEFINITION>        ::= <TYPE> <IDENTIFIER> ";"
- * <ARG_LIST>              ::= *(<EXPRESSION> *("," <EXPRESSION>))
+ * <IDENTIFIER>            ::= ("a"-"z" | "A"-"Z" | "_") *("a"-"z" | "A"-"Z" | "0"-"9" | "_" | "-")
+ * <IF>                    ::= "if" "(" <EXPRESSION> ")" <BLOCK>
+ * <INSTRUCTION>           ::= <EXPRESSION> ";"
+ * <LEFT_UNARY_OP>         ::= "!" | "-"
+ * <LEFT_UNARY_OPERATION>  ::= <UNARY_OP> <EXPRESSION>
+ * <RETURN>                ::= "return" <EXPRESSION>
+ * <RIGHT_UNARY_OP>        ::= "++" | "--"
+ * <RIGHT_UNARY_OPERATION> ::= <EXPRESSION> <UNARY_OP>
+ * <STATEMENT>             ::= <BLOCK>
+ *                           | <ELSE>
+ *                           | <FOR>
+ *                           | <IF>
+ *                           | <INSTRUCTION>
+ *                           | <RETURN>
+ *                           | <VAR_DECLARATION>
+ *                           | <VAR_DEFINITION>
+ *                           | <WHILE>
+ * <TYPE>                  ::= <IDENTIFIER>
  * <TYPED_ARG>             ::= <TYPE> <IDENTIFIER>
  * <TYPED_ARG_LIST>        ::= *(<TYPED_ARG> *("," <TYPED_ARG>))
  * <TYPE_LIST>             ::= *(<TYPE> *("," <TYPE>))
- * <EXPRESSION>            ::= <ASSIGN> | <IDENTIFIER> | <BINARY_RELATION> | <BINARY_OPERATION> | <UNARY_OPERATION> | <FUNC_CALL>
- * <ASSIGN>                ::= <IDENTIFIER> "=" <EXPRESSION>
- * <RIGHT_UNARY_OPERATION> ::= <EXPRESSION> <UNARY_OP>
- * <LEFT_UNARY_OPERATION>  ::= <UNARY_OP> <EXPRESSION>
- * <LEFT_UNARY_OP>         ::= "!" | "-"
- * <RIGHT_UNARY_OP>        ::= "++" | "--"
- * <BINARY_RELATION>       ::= <EXPRESSION> <BINARY_REL> <EXPRESSION>
- * <BINARY_REL>            ::= ">" | "<" | "<=" | ">=" | "==" | "!=" | "&&" | "||"
- * <BINARY_OPERATION>      ::= <EXPRESSION> <BINARY_OP> <EXPRESSION>
- * <BINARY_OP>             ::= "+" | "-" | "*" | "/" | "|" | "^" | "&" | "%"
- * <BLOCK>                 ::= "{" *<STATEMENT> "}"
- * <IDENTIFIER>            ::= ("a"-"z" | "A"-"Z" | "_") *("a"-"z" | "A"-"Z" | "0"-"9" | "_" | "-")
- * <FUNC_CALL>             ::= <IDENTIFIER> "(" <ARG_LIST> ")"
- * <TYPE>                  ::= <IDENTIFIER>
+ * <VAR_DECLARATION>       ::= <TYPE> <IDENTIFIER> "=" <EXPRESSION> ";"
+ * <VAR_DEFINITION>        ::= <TYPE> <IDENTIFIER> ";"
+ * <WHILE>                 ::= "while" "(" <EXPRESSION> ")" <BLOCK>
  */
 
 enum Node {
