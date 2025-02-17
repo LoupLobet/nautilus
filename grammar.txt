@@ -1,0 +1,44 @@
+<translation-unit>     ::= *<external-declaration>
+<external-declaration> ::= <func-declaration>
+			 / <var-declaration>
+<var-declaraion>       ::= <type> <identifier>
+<func-declaration>     ::= <identifier> "(" *<typed-arg-list> ")" *<type-list> <block>
+<identifier>           ::= ("a"-"z" / "A"-"Z" / "_") *("a"-"z" / "A"-"Z" / "0"-"9" / "_" / "-")
+<type>                 ::= 
+<type-list>            ::= <type> *( "," <type> )
+<type-arg-list>        ::= <type> <identifier> *( "," <type> <identifier> )
+<block>                ::= "{" *<statement> "}"
+<if>                   ::= "if" <expression> <block> *( "else" "if" <block>) [ "else" <block> ]
+<while>                ::= "while" <expression> <block>
+<return>               ::= "return <expression>
+<statement>            ::= <block>
+                         / <if>
+			 / <while>
+			 / <return>
+			 / <var-declaration>
+			 / <expression>
+<function-call>        ::= <identifier> "(" <expression-list> ")"
+<assign>               ::= <identifier> <assign-operator> <expression>
+<assign-operator>      ::= "=" / "+=" / "-=" / "*=" / "/=" / "%="
+			 / "&=" / "|=" / "^=" / ">>=" / "<<="
+<binary-operator>      ::= "+" / "-" / "*" / "/" / "|" / "^"
+			 / "&" / ">>" / "<<" / "%" / "||" / "&&"
+			 / "==" / "!=" / ">" / "<" / ">=" / "<="
+<binary-operation>     ::= <expression> <binary-operator> <expression>
+<unary-operation>      ::= <left-unary-operation>
+                         / <right-unary-operation>
+<left-unary-operation> ::= <left-unary-operator> <expression>
+<right-unary-operation>::= <expression> <right-unary-operator>
+<left-unary-operator>  ::= "-" / "+" / "!" / "++" / "--"
+<right-unary-operator> ::= "++" / "--"
+<expression>           ::= <binary-operation>
+			 / <unary-operation>
+			 / <assign>
+			 / <identifier>
+			 / <function-call>
+<expression-list>      ::= <expression> *( "," <expression> )
+
+
+div(float a, float b) float, error
+{
+}
